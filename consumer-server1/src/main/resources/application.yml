@@ -1,0 +1,88 @@
+server:
+  port: 12000
+spring:
+  application:
+    name: consumer-server1
+
+#eureka配置
+eureka:
+  client:
+    service-url:
+      #需要注册给Eureka Server的地址，也就是将自己注册给哪一个Eureka Server
+      defaultZone: http://eurekaServer13000:13000/eureka,http://eurekaServer13001:13001/eureka
+  instance:
+    #使用ip地址向Eureka注册
+    prefer-ip-address: true
+    #上面的配置已经可以使用ip注册了，但显示的还是主机名，所以这里设置显示的注册名
+    instance-id: ${spring.cloud.client.ip-address}:${server.port}
+    lease-renewal-interval-in-seconds: 5 #续约时间间隔（秒）
+    ease-expiration-duration-in-seconds: 15 #续约到期时间（秒）
+
+#resilience4j:
+#  #断路器配置
+#  circuitbreaker:
+#    configs:
+#      default:
+#        failureRateThreshold: 30 #失败请求百分⽐，超过这个⽐例，CircuitBreaker变为OPEN状态
+#        slidingWindowSize: 10 #滑动窗⼝的⼤⼩，配置COUNT_BASED,表示10个请求，配置TIME_BASED表示10秒
+#        minimumNumberOfCalls: 5 #最⼩请求个数，只有在滑动窗⼝内，请求个数达到这个个数，才会触发CircuitBreader对于断路器的判断
+#        slidingWindowType: TIME_BASED #滑动窗⼝的类型
+#        permittedNumberOfCallsInHalfOpenState: 3 #当CircuitBreaker处于HALF_OPEN状态的时候，允许通过的请求个数
+#        automaticTransitionFromOpenToHalfOpenEnabled: true #设置true，表示⾃动从OPEN变成HALF_OPEN，即使没有请求过来
+#        waitDurationInOpenState: 2s #从OPEN到HALF_OPEN状态需要等待的时间
+#        recordExceptions: #异常名单
+#          - java.lang.Exception
+#    instances:
+#      #实例化两个断路器
+#      backendA:
+#        baseConfig: default #熔断器backendA，继承默认配置default
+#      backendB:
+#        failureRateThreshold: 50
+#        slowCallDurationThreshold: 2s #慢调⽤时间阈值，⾼于这个阈值的呼叫视为慢调⽤，并增加慢调⽤⽐例。
+#        slowCallRateThreshold: 30 #慢调⽤百分⽐阈值，断路器把调⽤时间⼤于
+#        slowCallDurationThreshold，视为慢调⽤，当慢调⽤⽐例⼤于阈值，断路器打开，并进⾏服务降级
+#        slidingWindowSize: 10
+#        slidingWindowType: TIME_BASED
+#        minimumNumberOfCalls: 2
+#        permittedNumberOfCallsInHalfOpenState: 2
+#        waitDurationInOpenState: 2s #从OPEN到HALF_OPEN状态需要等待的时间
+#  #信号量隔离
+#  bulkhead:
+#    configs:
+#      default:
+#        maxConcurrentCalls: 5 # 隔离允许并发线程执⾏的最⼤数量
+#        maxWaitDuration: 20ms # 当达到并发调⽤数量时，新的线程的阻塞时间
+#    instances:
+#      backendA:
+#        baseConfig: default
+#      backendB:
+#        maxWaitDuration: 10ms
+#        maxConcurrentCalls: 20
+#  #线程池隔离
+#  thread-pool-bulkhead:
+#    configs:
+#      default:
+#        maxThreadPoolSize: 4 # 最⼤线程池⼤⼩
+#        coreThreadPoolSize: 2 # 核⼼线程池⼤⼩
+#        queueCapacity: 2 # 队列容量
+#    instances:
+#      backendA:
+#        baseConfig: default
+#      backendB:
+#        maxThreadPoolSize: 1
+#        coreThreadPoolSize: 1
+#        queueCapacity: 1
+#  #限流配置
+#  ratelimiter:
+#    configs:
+#      default:
+#        timeoutDuration: 5 # 线程等待权限的默认等待时间
+#        limitRefreshPeriod: 1s # 限流器每隔1s刷新⼀次，将允许处理的最⼤请求重置为2
+#        limitForPeriod: 2 #在⼀个刷新周期内，允许执⾏的最⼤请求数
+#    instances:
+#      backendA:
+#        baseConfig: default
+#      backendB:
+#        timeoutDuration: 5
+#        limitRefreshPeriod: 1s
+#        limitForPeriod: 5
