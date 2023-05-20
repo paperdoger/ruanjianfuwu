@@ -1,0 +1,61 @@
+server:
+  port: 14000
+spring:
+  application:
+    name: gateway-server
+  #下面是关于Spring Cloud Gateway的配置
+  cloud:
+    #----------配置全网关-------------#
+    gateway:
+      routes:
+      -   id: businessServer
+          uri: lb://consumer-server #这里改写成服务名
+          predicates:
+          -   Path=/cart/getUserById/**
+        #----------配置容错机制-------------#
+          filters:
+            - RewritePath=/api/(?<remaining>.*), /$\{remaining}
+            #---------服务熔断---------#
+            - name: CircuitBreaker
+              args:
+                name: api-service-cb
+                fallbackUri: forward:/fallback
+                fallbackHeaders:
+                  Content-Type: application/json
+                statusCodes:
+                  500-599: true
+                waitDurationInOpenState: 30s
+                ringBufferSizeInClosedState: 100
+                ringBufferSizeInHalfOpenState: 10
+#            #---------服务限流---------#
+           - name: RequestRateLimiter
+             args:
+               redis-rate-limiter.replenishRate: 10
+               redis-rate-limiter.burstCapacity: 20
+               key-resolver: "#{@apiKeyResolver}"
+#      #----------配置全局跨域策略-------------#
+     globalcors:
+       corsConfigurations:
+         '[/**]':
+           allowedOrigins: "*"
+           allowedMethods:
+             - GET
+             - POST
+           allowedHeaders:
+             - Authorization
+             - Content-Type
+           allowCredentials: true
+           #配置定义了一个名为 “globalcors'”的全局跨域配置，
+           #允许所有来源（“allowedOrigins”: “*”) 的 “GET”和 “POST” 请求，并允许“Authorization” 和“Content-Type”两个请求头，
+           #同时设置 “allowCredentials” 为 “true”
+#--------------eureka配置--------------------#
+eureka:
+  client:
+    service-url:
+      #需要注册给Eureka Server的地址，也就是将自己注册给哪一个Eureka Server
+      defaultZone: http://eurekaServer13000:13000/eureka,http://eurekaServer13001:13001/eureka
+  instance:
+    #使用ip地址向Eureka注册
+    prefer-ip-address: true
+    #上面的配置已经可以使用ip注册了，但显示的还是主机名，所以这里设置显示的注册名
+    instance-id: ${spring.cloud.client.ip-address}:${server.port}
